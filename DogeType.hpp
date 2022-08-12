@@ -52,6 +52,7 @@ public:
    const int getValue(){
         return m_value;
     }
+    operator int() const {return m_value;}
 };
 
 //doge string or text

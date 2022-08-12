@@ -16,7 +16,7 @@ public:
 Connection(int port) : m_socket(port){
     while(true) {
  Transaction transaction(&m_socket);
-     if(!transaction.m_complete){
+     if(!transaction.commit()){
          break;
      }
     }

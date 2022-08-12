@@ -8,22 +8,24 @@
 
 #include <fstream>
 #include "Socket.hpp"
-#include "DogeType.hpp"
-
+#include "File.hpp"
 class Transaction {
 public:
     Socket* m_socket;
     bool m_complete = false;
+    int op = 12;
+    int id;
+    DogeObject obj = DogeObject("a");
+    File database{"database.dogetable"};
+    File indexes{"index.dogetable"};
 Transaction(Socket* socket){
     m_socket = socket;
-    int op;
-    int id;
-    DogeObject *obj;
+
     //one for index, one for object, one for operation
     for (int i = 0; i < 3; i++) {
         //get data
         std::string bytes_in = socket->read();
-        std::cout << bytes_in << " <- received string \n";
+        //std::cout << bytes_in << " <- received string \n";
         //check data
         if (socket->isDisconnected()) {
             break;
@@ -32,12 +34,8 @@ Transaction(Socket* socket){
             break;
         }
         if (bytes_in == "clear") {
-            std::ofstream clear ("index.dogetable");
-            clear.clear();
-            clear.close();
-            std::ofstream c ("database.dogetable");
-            c .clear();
-            c.close();
+           indexes.clear();
+           database.clear();
 
             m_socket->write("k");
             m_complete = true;
@@ -46,11 +44,11 @@ Transaction(Socket* socket){
 
         switch (i) {
             case 0:
-                op = DogeInt(bytes_in).getValue();
+                op = DogeInt(bytes_in);
                 m_socket->write("k");
                 break;
             case 1:
-                id = DogeInt(bytes_in).getValue();
+                id = DogeInt(bytes_in);
                 if (op == 0) {
                     m_complete = true;
                 } else {
@@ -59,88 +57,47 @@ Transaction(Socket* socket){
 
                 break;
             case 2:
-                obj = new DogeObject(bytes_in);
+                obj =  DogeObject(bytes_in);
                 m_complete = true;
 
                 break;
 
 
         }
-        if (m_complete) {
-            if (op == 0) {
-                std::ifstream infile ("database.dogetable");
-                std::cout << "Returned " << id << "\n";
-
-                std::string str;
-
-
-                for (int i = 0; i < id+1; ++i) {
-
-                    char data [4];
-
-                    if(!infile.read( data, 4)){
-                        break;
-                    };
-                    int size = DogeInt(data).getValue();
-                    //  std::cout << size << " size \n";
-                    char data_2 [size];
-
-                    if(!infile.read(data_2,size)){
-                        break;
-                    };
-
-                    str = std::string (data_2,size);
-
-
-                }
-
-
-
-                std::cout << str << "\n";
-                //read
-                m_socket->write(str);
-                infile.close();
-                break;
-            } else {
-                std::ofstream outfile ("database.dogetable",std::ofstream::app);
-                std::cout << "Added \n";
-                //write
-                outfile  <<DogeInt(obj->serialize().size()).serialize() << obj->serialize();
-
-
-                outfile.close();
-                std::ifstream infile ("index.dogetable");
-                std::string str = "    ";
-                bool read = false;
-                int num = 0;
-                while (   infile.read( &*str.begin(), 4)) {
-                    num++;
-                    read = true;
-
-                }
-                std::cout << "num: " << num << "\n";
-
-                infile.close();
-                DogeInt index(str);
-                str.clear();
-                if(!read){
-                    index = -1;
-                }
-
-
-
-                std::ofstream outfile_2 ("index.dogetable",std::ofstream::app);
-                outfile_2.write(DogeInt(index.getValue() + 1).serialize().data(), 4 );
-                outfile_2.close();
-                std::cout << "id: " << index.getValue() + 1 << " \n";
-                m_socket->write(DogeInt(index.getValue() + 1).serialize());
-
-
-            }
+        if(m_complete){
+            break;
         }
 
-
     }
+}
+
+bool commit(){
+    if (m_complete) {
+        if (op == 0) {
+
+            DogeInt index(indexes.readItem(0));
+            if(id > -1 && id < index){
+                std::cout << "Returned " << id << "\n";
+                m_socket->write(database.readItem(id));
+            }else{
+                std::cout << "error " << id << "\n";
+                m_socket->write("error");
+            }
+
+        } else if(op == 1){
+            //write
+              database.writeItem(&obj);
+            DogeInt index(indexes.readItem(0));
+
+            index = index + 1;
+            indexes.overWriteItem(&index);
+            index = index - 1;
+            std::cout << "Added id: " << index << " \n";
+            m_socket->write(&index);
+        }
+    }
+    return m_complete;
+
 }
 };
 

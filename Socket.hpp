@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
-
+#include "DogeType.hpp"
 
 
 class Socket {
@@ -76,6 +76,7 @@ public:
         return std::string (buffer, number_read);
     }
 
+
     //write data
     const void write(const std::string message){
         if(m_disconnected){
@@ -83,6 +84,11 @@ public:
         }
         send(m_client_socket, message.c_str(), message.length(), 0);
     }
+
+    const void write(DogeType* object){
+        write(object->serialize());
+    }
+
 
 
 
