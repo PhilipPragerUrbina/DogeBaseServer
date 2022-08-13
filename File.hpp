@@ -21,7 +21,7 @@ public:
 
     //append a new item to the file
     void writeItem(std::string bytes){
-        std::ofstream output (m_filename,std::ofstream::app);
+        std::ofstream output (m_filename,std::ofstream::app| std::fstream::binary );
         //write size then actual data
         output  << DogeInt(bytes.size()).serialize() <<bytes;
         output.close();
@@ -30,18 +30,24 @@ public:
         writeItem(object->serialize());
     }
 
-    void overWriteItem(std::string bytes){
-        std::ofstream output (m_filename);
-        //write size then actual data
-        output  << DogeInt(bytes.size()).serialize() <<bytes;
-        output.close();
+    void overWriteItem(std::string bytes, int offset = 0){
+        if(offset == 0){
+            std::ofstream output (m_filename, std::fstream::binary );
+            output  << DogeInt(bytes.size()).serialize() <<bytes;
+            output.close();
+        }else{
+            std::fstream output( m_filename, std::fstream::in | std::fstream::out | std::fstream::binary );
+            output.seekp( offset );
+            output  << DogeInt(bytes.size()).serialize() <<bytes;
+            output.close();
+        }
     }
-    void overWriteItem(DogeType* object){
-        overWriteItem(object->serialize());
+    void overWriteItem(DogeType* object, int offset=0){
+        overWriteItem(object->serialize(), offset);
     }
     //read nth item
    const  std::string readItem(int number){
-        std::ifstream input (m_filename);
+        std::ifstream input (m_filename,std::fstream::binary );
         std::string out = "";
 
         for (int i = 0; i < number+1; ++i) {

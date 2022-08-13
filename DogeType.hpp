@@ -6,7 +6,7 @@
 #define DOGEBASE_DOGETYPE_HPP
 
 #include <string>
-//this file has all the types that can be represented in the doge database
+//this file has all the types that can be represented in the doge m_data
 //it is mirrored in the java client such that these types can be seamlessly interchanged
 
 enum DogeTypeID {
@@ -17,11 +17,11 @@ enum DogeTypeID {
     DOGE_DOUBLE, //a floating point number
     DOGE_DATE,  //A date, like the time of update
     DOGE_URL,  //a URL
-    DOGE_LINK, //reference to other location in database
+    DOGE_LINK, //reference to other location in m_data
     DOGE_OBJECT // a java object
 };
 
-//base class
+//m_data_base class
  class DogeType {
 public:
     virtual const std::string serialize() {};
@@ -39,6 +39,10 @@ public:
     }
 
     DogeInt(std::string bytes){
+        if(bytes.size() == 0){
+            m_value = 0;
+            return;
+        }
         //convert bytes to signed int
         m_value = *(int32_t *)bytes.data();
     }

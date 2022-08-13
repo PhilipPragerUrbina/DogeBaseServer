@@ -13,12 +13,14 @@
 class Connection {
 public:
     Socket m_socket;
-Connection(int port) : m_socket(port){
+Connection(int port, DataBase* data_base) : m_socket(port){
     while(true) {
- Transaction transaction(&m_socket);
-     if(!transaction.commit()){
+ Transaction transaction(&m_socket,data_base);
+     if(transaction.receive() < 1){
          break;
      }
+
+        transaction.commit();
     }
 }
 };

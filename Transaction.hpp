@@ -9,96 +9,56 @@
 #include <fstream>
 #include "Socket.hpp"
 #include "File.hpp"
+#include "DataBase.hpp"
+#include "Operation.hpp"
 class Transaction {
-public:
+private:
     Socket* m_socket;
-    bool m_complete = false;
-    int op = 12;
-    int id;
-    DogeObject obj = DogeObject("a");
-    File database{"database.dogetable"};
-    File indexes{"index.dogetable"};
-Transaction(Socket* socket){
+    DataBase* m_data_base;
+   Operation* m_operation = nullptr;
+public:
+    Transaction(Socket* socket, DataBase* data_base){
+    m_data_base = data_base;
     m_socket = socket;
+    }
 
-    //one for index, one for object, one for operation
-    for (int i = 0; i < 3; i++) {
-        //get data
-        std::string bytes_in = socket->read();
-        //std::cout << bytes_in << " <- received string \n";
-        //check data
-        if (socket->isDisconnected()) {
-            break;
+    int receive(){
+        OpCode opcode = OpCode(DogeInt(m_socket->read("opcode received")).getValue());
+        if (m_socket->isDisconnected()) {
+            return -1;
         }
-        if (bytes_in == "stop") {
-            break;
-        }
-        if (bytes_in == "clear") {
-           indexes.clear();
-           database.clear();
-
-            m_socket->write("k");
-            m_complete = true;
-            break;
-        }
-
-        switch (i) {
-            case 0:
-                op = DogeInt(bytes_in);
-                m_socket->write("k");
+        switch (opcode) {
+            case DOGE_STOP:
+                m_operation = new StopOperation();
+                return -1;
+            case DOGE_READ:
+                m_operation = new ReadOperation();
                 break;
-            case 1:
-                id = DogeInt(bytes_in);
-                if (op == 0) {
-                    m_complete = true;
-                } else {
-                    m_socket->write("k");
-                }
-
+            case DOGE_APPEND:
+                m_operation = new AppendOperation();
                 break;
-            case 2:
-                obj =  DogeObject(bytes_in);
-                m_complete = true;
-
+            case DOGE_CLEAR:
+                m_operation = new ClearOperation();
                 break;
-
-
+            case DOGE_DELETE:
+                //dont delete, just overwrite with deleteion
+                //compress m_data later
+                break;
         }
-        if(m_complete){
-            break;
+        return m_operation->receive(m_socket,m_data_base);
+    }
+
+void commit(){
+    if(m_operation != nullptr) {
+        m_operation->finalize(m_data_base);
+    }
+}
+~Transaction(){
+        if(m_operation != nullptr){
+            delete m_operation;
         }
 
     }
-}
-
-bool commit(){
-    if (m_complete) {
-        if (op == 0) {
-
-            DogeInt index(indexes.readItem(0));
-            if(id > -1 && id < index){
-                std::cout << "Returned " << id << "\n";
-                m_socket->write(database.readItem(id));
-            }else{
-                std::cout << "error " << id << "\n";
-                m_socket->write("error");
-            }
-
-        } else if(op == 1){
-            //write
-              database.writeItem(&obj);
-            DogeInt index(indexes.readItem(0));
-
-            index = index + 1;
-            indexes.overWriteItem(&index);
-            index = index - 1;
-            std::cout << "Added id: " << index << " \n";
-            m_socket->write(&index);
-        }
-    }
-    return m_complete;
-
-}
 };
 
 #endif DOGEBASE_TRANSACTION_HPP

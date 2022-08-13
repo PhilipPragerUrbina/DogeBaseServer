@@ -76,6 +76,13 @@ public:
         return std::string (buffer, number_read);
     }
 
+    //get data with response
+    const std::string read(std::string response){
+       std::string to_return = read();
+        write(response);
+        return to_return;
+    }
+
 
     //write data
     const void write(const std::string message){
