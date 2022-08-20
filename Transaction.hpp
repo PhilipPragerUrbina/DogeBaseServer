@@ -11,52 +11,77 @@
 #include "File.hpp"
 #include "DataBase.hpp"
 #include "Operation.hpp"
+
+//class to represent a transaction for atomicity
 class Transaction {
 private:
+    //info needed to do operations
     Socket* m_socket;
     DataBase* m_data_base;
-   Operation* m_operation = nullptr;
+    //operations in transaction
+   std::vector<Operation*> m_operations;
 public:
+
+    //set info
     Transaction(Socket* socket, DataBase* data_base){
     m_data_base = data_base;
     m_socket = socket;
     }
 
+    //receive an operation through the socket and add to transactions
     int receive(){
+
+        //read and respond
         OpCode opcode = OpCode(DogeInt(m_socket->read("opcode received")).getValue());
-        if (m_socket->isDisconnected()) {
+        if (m_socket->isDisconnected()) { //error check
             return -1;
         }
+
+        //create corresponding operation
+        Operation* operation;
         switch (opcode) {
             case DOGE_STOP:
-                m_operation = new StopOperation();
+                operation = new StopOperation();
                 return -1;
             case DOGE_READ:
-                m_operation = new ReadOperation();
+                operation = new ReadOperation();
                 break;
             case DOGE_APPEND:
-                m_operation = new AppendOperation();
+                operation = new AppendOperation();
                 break;
             case DOGE_CLEAR:
-                m_operation = new ClearOperation();
+                operation = new ClearOperation();
                 break;
             case DOGE_DELETE:
                 //dont delete, just overwrite with deleteion
                 //compress m_data later
                 break;
         }
-        return m_operation->receive(m_socket,m_data_base);
+        if(operation == nullptr){
+            return -1;
+        }
+        //add operation
+        m_operations.push_back(operation);
+
+        //do initial action
+        return operation->receive(m_socket,m_data_base);
+    }
+    //finalize and apply all operations
+void commit(){
+    for (Operation* op : m_operations) {
+        if(op != nullptr) {
+            op->finalize(m_data_base);
+        }
     }
 
-void commit(){
-    if(m_operation != nullptr) {
-        m_operation->finalize(m_data_base);
-    }
 }
+//clean up
 ~Transaction(){
-        if(m_operation != nullptr){
-            delete m_operation;
+    for (Operation* op : m_operations) {
+        if(op != nullptr) {
+           delete op;
         }
+    }
 
     }
 };

@@ -21,24 +21,33 @@ enum DogeTypeID {
     DOGE_OBJECT // a java object
 };
 
+
+
 //m_data_base class
  class DogeType {
+ protected:
+     DogeTypeID m_id = DOGE_DATA;
 public:
+
     virtual const std::string serialize() {};
+     virtual  DogeTypeID getID(){ return m_id;};
 };
 
 //doge integer
 class DogeInt : public DogeType{
 private:
-    DogeTypeID m_id = DOGE_INTEGER;
+
     int32_t m_value;
 public:
 
+
     DogeInt(int value){
+        m_id = DOGE_INTEGER;
         m_value = value;
     }
 
     DogeInt(std::string bytes){
+        m_id = DOGE_INTEGER;
         if(bytes.size() == 0){
             m_value = 0;
             return;
@@ -57,16 +66,19 @@ public:
         return m_value;
     }
     operator int() const {return m_value;}
+
+
 };
 
 //doge string or text
 class DogeString : public DogeType{
 private:
-    DogeTypeID m_id = DOGE_STRING;
+
     std::string m_value;
 public:
     //bytes and raw value are the same
     DogeString(std::string chars){
+         m_id = DOGE_STRING;
         m_value = chars;
     }
     const std::string serialize() override{
@@ -80,11 +92,11 @@ public:
 //doge java object
 class DogeObject : public DogeType{
 private:
-    DogeTypeID m_id = DOGE_OBJECT;
     std::string m_value;
 public:
     //you cannot access the value of this since it is from java
     DogeObject(std::string chars){
+        m_id = DOGE_OBJECT;
         m_value = chars;
     }
     const std::string serialize() override{
@@ -92,5 +104,48 @@ public:
     }
 };
 
+class DogeTypeData{
+private:
+    DogeType* m_data = nullptr;
+    DogeTypeID m_type;
+public:
+    DogeTypeData(std::string bytes , DogeTypeID type){
+        m_type = type;
+        switch (m_type) {
+            case DOGE_OBJECT:
+                m_data = new DogeObject(bytes);
+            case DOGE_DATA:
+                m_data = new DogeObject(bytes);
+            case DOGE_INTEGER:
+                m_data = new DogeInt(bytes);
+            case DOGE_STRING:
+                m_data = new DogeString(bytes);
+        }
+    }
+
+    DogeTypeData(DogeType* data){
+        m_data = data;
+        m_type = data->getID();
+    }
+
+    DogeType* getData(){
+        return m_data;
+    }
+
+    DogeTypeID getType(){
+        return m_type;
+    }
+
+
+
+
+    ~DogeTypeData(){
+        if(m_data != nullptr){
+            delete m_data;
+        }
+    }
+
+
+};
 
 #endif DOGEBASE_DOGETYPE_HPP

@@ -11,6 +11,8 @@
 enum OpCode{
     DOGE_WRITE,DOGE_READ, DOGE_APPEND, DOGE_STOP, DOGE_CLEAR,DOGE_DELETE
 };
+
+
 class Operation {
 public:
     virtual int receive(Socket* socket, DataBase *data_base){};

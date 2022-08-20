@@ -30,6 +30,7 @@ public:
         writeItem(object->serialize());
     }
 
+    //overwrite an item a certain number of bytes in
     void overWriteItem(std::string bytes, int offset = 0){
         if(offset == 0){
             std::ofstream output (m_filename, std::fstream::binary );
@@ -45,6 +46,8 @@ public:
     void overWriteItem(DogeType* object, int offset=0){
         overWriteItem(object->serialize(), offset);
     }
+
+
     //read nth item
    const  std::string readItem(int number){
         std::ifstream input (m_filename,std::fstream::binary );
@@ -73,7 +76,7 @@ public:
         return out;
     }
 
-
+//remove data from file
     void clear(){
         std::ofstream clear (m_filename);
         clear.close();

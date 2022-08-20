@@ -7,7 +7,7 @@
 
 
 #include "File.hpp"
-
+//represents the associated data with a database
 class DataBase {
 public:
     File m_data;
