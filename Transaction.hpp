@@ -42,7 +42,7 @@ public:
         switch (opcode) {
             case DOGE_STOP:
                 operation = new StopOperation();
-                return -1;
+                return -2;
             case DOGE_READ:
                 operation = new ReadOperation();
                 break;

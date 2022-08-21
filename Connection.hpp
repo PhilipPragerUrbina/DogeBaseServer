@@ -19,10 +19,19 @@ public:
         //receive transactions
         while (true) {
             Transaction transaction(&m_socket, data_base);
-            if (transaction.receive() < 1) { //check if successful
-                break;
+            while (true){
+                int receive = transaction.receive();
+
+                if (receive == -1) { //check if successful
+                    return;
+                }
+                if (receive == -2) { //check if successful
+                    break;
+                }
+
             }
 
+            std::cout << "finalized \n";
             transaction.commit();
         }
     }
