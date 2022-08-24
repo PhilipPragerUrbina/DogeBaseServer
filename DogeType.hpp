@@ -56,7 +56,7 @@ public:
         m_value = *(int32_t *)bytes.data();
     }
 
-    const std::string serialize() override{
+    const std::string  serialize() override{
         char* char_buffer = static_cast<char*>(static_cast<void*>(&m_value));
 
         return std::string(char_buffer, 4);
@@ -67,6 +67,7 @@ public:
     }
     operator int() const {return m_value;}
 
+    operator std::string () {return serialize();}
 
 };
 

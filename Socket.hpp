@@ -79,13 +79,14 @@ public:
     //get data with response
     const std::string read(std::string response){
        std::string to_return = read();
-        write(response);
+        write(response,0);
         return to_return;
     }
 
 
     //write data
-    const void write(const std::string message){
+    const void write( std::string message, int code ){
+        message.insert(0, DogeInt(code));
         if(m_disconnected){
             return;
         }
@@ -93,7 +94,7 @@ public:
     }
 
     const void write(DogeType* object){
-        write(object->serialize());
+        write(object->serialize(),0);
     }
 
 

@@ -19,20 +19,16 @@ public:
         //receive transactions
         while (true) {
             Transaction transaction(&m_socket, data_base);
-            while (true){
-                int receive = transaction.receive();
-
-                if (receive == -1) { //check if successful
-                    return;
-                }
-                if (receive == -2) { //check if successful
-                    break;
-                }
-
+            try{
+                transaction.receive();
+                std::cout << "finalized \n";
+                transaction.commit();
+            }catch (DogeException exception){
+                std::cerr << exception.getMessage() << "\n";
+                m_socket.write(exception.getMessage(),1);
+                break;
             }
 
-            std::cout << "finalized \n";
-            transaction.commit();
         }
     }
 };

@@ -29,12 +29,12 @@ public:
     }
 
     //receive an operation through the socket and add to transactions
-    int receive(){
+    void receive(){
 
         //read and respond
         OpCode opcode = OpCode(DogeInt(m_socket->read("opcode received")).getValue());
         if (m_socket->isDisconnected()) { //error check
-            return -1;
+            throw DogeException("Disconnected from Client");
         }
 
         //create corresponding operation
@@ -42,7 +42,7 @@ public:
         switch (opcode) {
             case DOGE_STOP:
                 operation = new StopOperation();
-                return -2;
+                break;
             case DOGE_READ:
                 operation = new ReadOperation();
                 break;
@@ -53,18 +53,17 @@ public:
                 operation = new ClearOperation();
                 break;
             case DOGE_DELETE:
-                //dont delete, just overwrite with deleteion
+                //dont delete, just overwrite with deletion
                 //compress m_data later
                 break;
         }
         if(operation == nullptr){
-            return -1;
+            throw DogeException("Unknown OpCode");
         }
         //add operation
         m_operations.push_back(operation);
-
         //do initial action
-        return operation->receive(m_socket,m_data_base);
+       operation->receive(m_socket,m_data_base);
     }
     //finalize and apply all operations
 void commit(){

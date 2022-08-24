@@ -3,5 +3,6 @@ project(DogeBase)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(DogeBase main.cpp Socket.hpp DogeType.hpp Connection.hpp Transaction.hpp File.hpp Operation.hpp DataBase.hpp)
+
+add_executable(DogeBase main.cpp Socket.hpp DogeType.hpp Connection.hpp Transaction.hpp File.hpp Operation.hpp DataBase.hpp DogeException.hpp)
 

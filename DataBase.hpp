@@ -10,6 +10,7 @@
 //represents the associated data with a database
 class DataBase {
 public:
+    //add transaction memory here as a vecxtor
     File m_data;
     File m_metadata;
     DataBase(std::string name): m_data(name + ".dogetable"), m_metadata(name+".dogemeta"){
