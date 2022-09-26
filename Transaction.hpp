@@ -12,6 +12,7 @@
 #include "DataBase.hpp"
 #include "Operation.hpp"
 
+
 //class to represent a transaction for atomicity
 class Transaction {
 private:
@@ -20,6 +21,7 @@ private:
     DataBase* m_data_base;
     //operations in transaction
    std::vector<Operation*> m_operations;
+   TransactionMemory m_memory;
 public:
 
     //set info
@@ -63,7 +65,7 @@ public:
         //add operation
         m_operations.push_back(operation);
         //do initial action
-       operation->receive(m_socket,m_data_base);
+        operation->receive(m_socket, m_data_base, &m_memory);
     }
     //finalize and apply all operations
 void commit(){
@@ -76,12 +78,11 @@ void commit(){
 }
 //clean up
 ~Transaction(){
-    for (Operation* op : m_operations) {
-        if(op != nullptr) {
-           delete op;
+        for (Operation* op : m_operations) {
+            if(op != nullptr) {
+               delete op;
+            }
         }
-    }
-
     }
 };
 

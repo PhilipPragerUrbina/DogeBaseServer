@@ -29,7 +29,7 @@ enum DogeTypeID {
      DogeTypeID m_id = DOGE_DATA;
 public:
 
-    virtual const std::string serialize() {};
+     virtual const std::string serialize() {return "";};
      virtual  DogeTypeID getID(){ return m_id;};
 };
 
