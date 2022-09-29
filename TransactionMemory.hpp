@@ -28,6 +28,7 @@ public:
     }
     void incrementID(){
         m_latest_id_offset++;
+
     }
 
     DogeType* getMemory(int id){
@@ -40,6 +41,6 @@ public:
     DogeType* setMemory(int id, DogeType* data){
        m_transaction_memory[id] = data;
     }
-};
+}
 
 #endif DOGEBASE_TRANSACTIONMEMORY_HPP

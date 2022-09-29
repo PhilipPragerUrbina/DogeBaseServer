@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include "DogeType.hpp"
+#include "DogeException.hpp"
 
 
 class Socket {
@@ -70,7 +71,7 @@ public:
         int number_read = ::read(m_client_socket, buffer, 1024) ;
         if(number_read <= 0){
             stop();
-            return "";
+            throw DogeException("Disconnected from Client");
         }
 
         return std::string (buffer, number_read);

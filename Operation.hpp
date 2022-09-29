@@ -2,14 +2,16 @@
 // Created by Philip on 8/12/2022.
 //
 
-#ifndef DOGEBASE_OPERATION_HPP
-#define DOGEBASE_OPERATION_HPP
+#pragma once
 
+#include "TransactionMemory.hpp"
 #include "Socket.hpp"
 #include "DataBase.hpp"
 #include "DogeException.hpp"
 
-#include "TransactionMemory.hpp"
+
+
+
 //Doge opcodes
 enum OpCode{
     DOGE_WRITE,DOGE_READ, DOGE_APPEND, DOGE_STOP, DOGE_CLEAR,DOGE_DELETE
@@ -23,6 +25,8 @@ public:
     //do atomic action once everything else is successful
     virtual void finalize(DataBase* data_base){};
 };
+
+
 
 //stop the connection
 class StopOperation : public Operation{
@@ -55,6 +59,8 @@ public:
 
 
         m_id = DogeInt(socket->read());
+
+        //todo get num attibutes return document
         std::cout << "Request to read:" << m_id << " \n";
         if (socket->isDisconnected()) {
             throw DogeException("Disconnected from Client");
@@ -82,19 +88,32 @@ public:
 class AppendOperation : public Operation{
 private:
     //data
-    DogeObject m_object{""};
-    DogeInt m_id = 0;
+    std::vector<DogeType> m_objects{""};
+    std::vector<DogeInt> m_ids = 0;
 public:
     void receive(Socket *socket, DataBase *data_base, TransactionMemory *memory) {
+
+
+        //output the request type
         std::cout << "Request to write \n";
-        m_object = DogeObject(socket->read());
-        if (socket->isDisconnected()) {
-            throw DogeException("Disconnected from Client");
+
+        //get then length of the request(# of items in document)
+        int length = DogeInt(socket.read("Length read"));
+        for (int i = 0; i < length; ++i) {
+            //recieve type
+            DogeTypeID t = DogeInt(socket.read("type read"));
+            //receive object
+            DogeType object = DogeDogeTypeObject(socket->read()); //todo  make it be correct type
+            int id = DogeInt(data_base->m_metadata.readItem(0));
+            id = id + memory->getIDOffset(); //add temporary offset(we dont want to incrment the global latest id until finalized)
+            memory->incrementID(); //increment offset
+            memory->setMemory(id, &object);
+            m_objects.push_back(object);
+            m_ids.push_back(id);
         }
-        m_id = DogeInt(data_base->m_metadata.readItem(0));
-        m_id = m_id + memory->getIDOffset(); //add temporary offset(we dont want to incrment the global latest id until finalized)
-        memory->incrementID(); //increment offset
-        memory->setMemory(m_id, &m_object);
+
+
+
 
         socket->write(&m_id);
     }
@@ -108,4 +127,3 @@ public:
         std::cout << "Write fulfilled at id: " << m_id << " \n";
     }
 };
-#endif DOGEBASE_OPERATION_HPP
